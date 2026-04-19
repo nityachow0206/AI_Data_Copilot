@@ -148,18 +148,14 @@ if st.button("Run Query"):
         sql = generate_sql(question)
 
         try:
-            with engine.connect() as conn:
-                result = conn.execute(text(sql)).fetchall()
+           with engine.connect() as conn:
+           result = conn.execute(text(sql)).mappings().all()
 
-            # ---------------------------
-            # SAFE DATAFRAME CREATION
-            # ---------------------------
             if result:
-                columns = result[0].keys()
-                result_df = pd.DataFrame(result, columns=columns)
+                result_df = pd.DataFrame(result)
             else:
-                result_df = pd.DataFrame()
-                st.warning("No data found for this query")
+                    result_df = pd.DataFrame()
+                    st.warning("No data found")
 
             # ---------------------------
             # DISPLAY
