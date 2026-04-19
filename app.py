@@ -12,23 +12,12 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import warnings
 
-# ---------------------------
-# REMOVE WARNINGS
-# ---------------------------
 warnings.filterwarnings("ignore")
 
-# ---------------------------
-# PAGE CONFIG
-# ---------------------------
 st.set_page_config(page_title="AI Data Copilot", layout="wide")
 
-# ---------------------------
-# TITLE & DESCRIPTION
-# ---------------------------
 st.title("🤖 AI Data Copilot")
-st.markdown("""
-Ask questions in natural language and get insights from your data instantly.
-""")
+st.markdown("Ask questions in natural language and get insights from your data instantly.")
 
 st.markdown("### 💡 Try these questions:")
 st.write("- Total amount by state")
@@ -36,7 +25,7 @@ st.write("- Show fraud transactions")
 st.write("- Average transaction amount")
 
 # ---------------------------
-# LOAD DATA
+# DATA
 # ---------------------------
 data = {
     "id": [1, 2, 3, 4, 5, 6],
@@ -47,68 +36,60 @@ data = {
 
 df = pd.DataFrame(data)
 
-# ---------------------------
-# DATABASE SETUP
-# ---------------------------
 engine = create_engine("sqlite:///data.db")
 df.to_sql("transactions", engine, if_exists="replace", index=False)
 
 # ---------------------------
-# SQL GENERATOR (AI SIMULATION)
+# SQL LOGIC
 # ---------------------------
 def generate_sql(question):
     q = question.lower()
 
     if "total" in q and "state" in q:
         return "SELECT state, SUM(amount) as total_amount FROM transactions GROUP BY state"
-
     elif "fraud" in q:
         return "SELECT * FROM transactions WHERE category='fraud'"
-
     elif "average" in q:
         return "SELECT AVG(amount) as avg_amount FROM transactions"
-
     else:
         return "SELECT * FROM transactions"
 
-# ---------------------------
-# EXPLANATION ENGINE
-# ---------------------------
 def generate_explanation(question):
     q = question.lower()
 
     if "total" in q:
-        return "This query calculates the total transaction amount grouped by each state."
-
+        return "This query calculates total transaction amount grouped by state."
     elif "fraud" in q:
-        return "This query filters and displays only the transactions marked as fraud."
-
+        return "This query shows all fraud transactions."
     elif "average" in q:
-        return "This query computes the average transaction amount."
-
+        return "This query calculates average transaction amount."
     else:
-        return "This query retrieves all records from the transactions dataset."
+        return "This query returns all records."
 
 # ---------------------------
-# USER INPUT
+# FORM INPUT (ONLY THIS)
 # ---------------------------
 with st.form("query_form"):
     question = st.text_input("🔍 Ask your question:")
     submit = st.form_submit_button("Run Query")
 
+# ---------------------------
+# EXECUTION
+# ---------------------------
 if submit:
+
     if not question.strip():
         st.warning("Please enter a question")
+
     else:
         sql = generate_sql(question)
 
         try:
             with engine.connect() as conn:
-                result = conn.execute(text(sql)).fetchall()
+                result = conn.execute(text(sql)).mappings().all()
 
             if result:
-                columns = result[0].keys()
-                result_df = pd.DataFrame(result, columns=columns)
+                result_df = pd.DataFrame(result)
             else:
                 result_df = pd.DataFrame()
                 st.warning("No data found")
@@ -137,52 +118,3 @@ if submit:
         except Exception as e:
             st.error(f"Error: {e}")
 
-# ---------------------------
-# RUN QUERY
-# ---------------------------
-if st.button("Run Query"):
-
-    if not question.strip():
-        st.warning("Please enter a question")
-    else:
-        sql = generate_sql(question)
-
-        try:
-           with engine.connect() as conn:
-           result = conn.execute(text(sql)).mappings().all()
-
-            if result:
-                result_df = pd.DataFrame(result)
-            else:
-                    result_df = pd.DataFrame()
-                    st.warning("No data found")
-
-            # ---------------------------
-            # DISPLAY
-            # ---------------------------
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.subheader("🧠 Generated SQL")
-                st.code(sql)
-
-                st.subheader("💡 Explanation")
-                st.write(generate_explanation(question))
-
-            with col2:
-                st.subheader("📊 Results")
-                st.dataframe(result_df)
-
-            # ---------------------------
-            # SAFE CHART
-            # ---------------------------
-            if (
-                not result_df.empty and
-                "state" in result_df.columns and
-                "total_amount" in result_df.columns
-            ):
-                st.subheader("📈 Visualization")
-                st.bar_chart(result_df.set_index("state"))
-
-        except Exception as e:
-            st.error(f"Error running query: {e}")
