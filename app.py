@@ -92,7 +92,50 @@ def generate_explanation(question):
 # ---------------------------
 # USER INPUT
 # ---------------------------
-question = st.text_input("🔍 Ask your question:")
+with st.form("query_form"):
+    question = st.text_input("🔍 Ask your question:")
+    submit = st.form_submit_button("Run Query")
+
+if submit:
+    if not question.strip():
+        st.warning("Please enter a question")
+    else:
+        sql = generate_sql(question)
+
+        try:
+            with engine.connect() as conn:
+                result = conn.execute(text(sql)).fetchall()
+
+            if result:
+                columns = result[0].keys()
+                result_df = pd.DataFrame(result, columns=columns)
+            else:
+                result_df = pd.DataFrame()
+                st.warning("No data found")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("🧠 Generated SQL")
+                st.code(sql)
+
+                st.subheader("💡 Explanation")
+                st.write(generate_explanation(question))
+
+            with col2:
+                st.subheader("📊 Results")
+                st.dataframe(result_df)
+
+            if (
+                not result_df.empty and
+                "state" in result_df.columns and
+                "total_amount" in result_df.columns
+            ):
+                st.subheader("📈 Visualization")
+                st.bar_chart(result_df.set_index("state"))
+
+        except Exception as e:
+            st.error(f"Error: {e}")
 
 # ---------------------------
 # RUN QUERY
