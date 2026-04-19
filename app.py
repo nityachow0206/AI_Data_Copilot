@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1Oa_i13MDm7241hNVu4H7D_7eh5sIfcaQ
 """
 
-!pip install streamlit pyngrok transformers pandas sqlalchemy
-
 # Commented out IPython magic to ensure Python compatibility.
 # %%writefile app.py
 # import streamlit as st
@@ -55,6 +53,3 @@ Original file is located at
 # 
 #     st.subheader("Result")
 #     st.write(result)
-
-!pip install streamlit
-!streamlit run app.py &>/dev/null &
