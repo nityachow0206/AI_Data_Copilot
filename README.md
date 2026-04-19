@@ -53,7 +53,7 @@ User Input → Query Parser → SQL Generator → Database → Results + Visuali
 
 ### 🖥️ Application UI and 📊 Query Results
 
-![RESULTS](output_1.png)
+![RESULTS](screenshots/result.png)
 
 
 The main interface where users can input natural language queries.  
