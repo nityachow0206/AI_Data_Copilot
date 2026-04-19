@@ -7,49 +7,143 @@ Original file is located at
     https://colab.research.google.com/drive/1Oa_i13MDm7241hNVu4H7D_7eh5sIfcaQ
 """
 
-# Commented out IPython magic to ensure Python compatibility.
-# %%writefile app.py
-# import streamlit as st
-# import pandas as pd
-# from sqlalchemy import create_engine, text
-# 
-# # Load data
-# df = pd.DataFrame({
-#     "id":[1,2,3,4],
-#     "amount":[100,200,150,300],
-#     "state":["CA","NY","TX","CA"],
-#     "category":["fraud","normal","fraud","normal"]
-# })
-# 
-# # Create database
-# engine = create_engine("sqlite:///data.db")
-# df.to_sql("transactions", engine, if_exists="replace", index=False)
-# 
-# # SQL generator (AI simulation)
-# def generate_sql(question):
-#     q = question.lower()
-#     if "total" in q and "state" in q:
-#         return "SELECT state, SUM(amount) as total FROM transactions GROUP BY state"
-#     elif "fraud" in q:
-#         return "SELECT * FROM transactions WHERE category='fraud'"
-#     elif "average" in q:
-#         return "SELECT AVG(amount) FROM transactions"
-#     else:
-#         return "SELECT * FROM transactions"
-# 
-# # UI
-# st.title("🤖 AI Data Copilot")
-# 
-# question = st.text_input("Ask your question")
-# 
-# if st.button("Run"):
-#     sql = generate_sql(question)
-# 
-#     with engine.connect() as conn:
-#         result = conn.execute(text(sql)).fetchall()
-# 
-#     st.subheader("Generated SQL")
-#     st.code(sql)
-# 
-#     st.subheader("Result")
-#     st.write(result)
+import streamlit as st
+import pandas as pd
+from sqlalchemy import create_engine, text
+import warnings
+
+# ---------------------------
+# REMOVE WARNINGS
+# ---------------------------
+warnings.filterwarnings("ignore")
+
+# ---------------------------
+# PAGE CONFIG
+# ---------------------------
+st.set_page_config(page_title="AI Data Copilot", layout="wide")
+
+# ---------------------------
+# TITLE & DESCRIPTION
+# ---------------------------
+st.title("🤖 AI Data Copilot")
+st.markdown("""
+Ask questions in natural language and get insights from your data instantly.
+""")
+
+st.markdown("### 💡 Try these questions:")
+st.write("- Total amount by state")
+st.write("- Show fraud transactions")
+st.write("- Average transaction amount")
+
+# ---------------------------
+# LOAD DATA
+# ---------------------------
+data = {
+    "id": [1, 2, 3, 4, 5, 6],
+    "amount": [100, 200, 150, 300, 250, 180],
+    "state": ["CA", "NY", "TX", "CA", "NY", "TX"],
+    "category": ["fraud", "normal", "fraud", "normal", "fraud", "normal"]
+}
+
+df = pd.DataFrame(data)
+
+# ---------------------------
+# DATABASE SETUP
+# ---------------------------
+engine = create_engine("sqlite:///data.db")
+df.to_sql("transactions", engine, if_exists="replace", index=False)
+
+# ---------------------------
+# SQL GENERATOR (AI SIMULATION)
+# ---------------------------
+def generate_sql(question):
+    q = question.lower()
+
+    if "total" in q and "state" in q:
+        return "SELECT state, SUM(amount) as total_amount FROM transactions GROUP BY state"
+
+    elif "fraud" in q:
+        return "SELECT * FROM transactions WHERE category='fraud'"
+
+    elif "average" in q:
+        return "SELECT AVG(amount) as avg_amount FROM transactions"
+
+    else:
+        return "SELECT * FROM transactions"
+
+# ---------------------------
+# EXPLANATION ENGINE
+# ---------------------------
+def generate_explanation(question):
+    q = question.lower()
+
+    if "total" in q:
+        return "This query calculates the total transaction amount grouped by each state."
+
+    elif "fraud" in q:
+        return "This query filters and displays only the transactions marked as fraud."
+
+    elif "average" in q:
+        return "This query computes the average transaction amount."
+
+    else:
+        return "This query retrieves all records from the transactions dataset."
+
+# ---------------------------
+# USER INPUT
+# ---------------------------
+question = st.text_input("🔍 Ask your question:")
+
+# ---------------------------
+# RUN QUERY
+# ---------------------------
+if st.button("Run Query"):
+
+    if not question.strip():
+        st.warning("Please enter a question")
+    else:
+        sql = generate_sql(question)
+
+        try:
+            with engine.connect() as conn:
+                result = conn.execute(text(sql)).fetchall()
+
+            # ---------------------------
+            # SAFE DATAFRAME CREATION
+            # ---------------------------
+            if result:
+                columns = result[0].keys()
+                result_df = pd.DataFrame(result, columns=columns)
+            else:
+                result_df = pd.DataFrame()
+                st.warning("No data found for this query")
+
+            # ---------------------------
+            # DISPLAY
+            # ---------------------------
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("🧠 Generated SQL")
+                st.code(sql)
+
+                st.subheader("💡 Explanation")
+                st.write(generate_explanation(question))
+
+            with col2:
+                st.subheader("📊 Results")
+                st.dataframe(result_df)
+
+            # ---------------------------
+            # SAFE CHART
+            # ---------------------------
+            if (
+                not result_df.empty and
+                "state" in result_df.columns and
+                "total_amount" in result_df.columns
+            ):
+                st.subheader("📈 Visualization")
+                st.bar_chart(result_df.set_index("state"))
+
+        except Exception as e:
+            st.error(f"Error running query: {e}")
