@@ -53,8 +53,10 @@ User Input → Query Parser → SQL Generator → Database → Results + Visuali
 
 ### 🖥️ Application UI and 📊 Query Results
 
-![RESULTS](screenshots/result.png)
-
+![RESULTS](screenshots/result1.png)
+![RESULTS](screenshots/result_2.1.png)
+![RESULTS](screenshots/result_2.2.png)
+![RESULTS](screenshots/result_3.png)
 
 The main interface where users can input natural language queries.  
 It provides example prompts and allows users to interact with the AI-powered data assistant in real time.
