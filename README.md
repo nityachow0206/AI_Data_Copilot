@@ -79,7 +79,7 @@ It helps non-technical users explore data without writing SQL.
 ## 🚀 Getting Started (Run Locally)
 1. Clone the repository
 
-git clone https://github.com/your-username/ai-data-copilot.git
+git clone https://github.com/nityachow0206/AI_Data_Copilot.git
 cd ai-data-copilot
 
 2. Install dependencies
